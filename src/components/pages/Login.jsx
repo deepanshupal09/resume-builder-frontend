@@ -7,12 +7,16 @@ import { jwtDecode } from "jwt-decode";
 import { getCookie, setCookieWithExpiry } from "../../cookies";
 import axios from "axios";
 import Navbar from "../Navbar";
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function Login({user,setUser}) {
   const [Email, setEmail] = useState("");
   const [Password, setPass] = useState("");
   const [helperText, setHelperText] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,23 +56,28 @@ function Login({user,setUser}) {
     setCookieWithExpiry("auth", usr, 2);
     usr = { ...usr, password: null };
     setUser(usr);
+    setLoading(true);
 
     axios
       .post("https://resume-builder-backend-iceh.onrender.com/api/data/", usr)
       .then((res) => {
         console.log("logged in! ", res);
+        setLoading(false);
       })
       .catch((error) => {
         console.log("error ", error);
+        setLoading(false);
       });
     navigate("/dashboard");
   }
 
   async function handleLogin() {
     const url = `https://resume-builder-backend-iceh.onrender.com/api/data/getUserByEmail`;
+    setLoading(true);
     axios
       .get(url,{headers: {email: Email}})
       .then((res) => {
+        setLoading(false);
         if (res.data.length < 1) {
           console.log("Email Id not found");
           setError(true);
@@ -90,6 +99,7 @@ function Login({user,setUser}) {
         }
       })
       .catch((error) => {
+        setLoading(false);
         console.log("error: ", error);
       });
   }
@@ -218,6 +228,13 @@ function Login({user,setUser}) {
           </div>
         </div>
       </div>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      // onClick={handleClose}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }

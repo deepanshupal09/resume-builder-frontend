@@ -59,7 +59,7 @@ function Login({user,setUser}) {
     setUser(usr);
 
     axios
-      .post("http://localhost:4000/api/data/", usr)
+      .post("https://resume-builder-backend-iceh.onrender.com/api/data/", usr)
       .then((res) => {
         console.log("logged in! ", res);
         setLoading(false);
@@ -74,7 +74,7 @@ function Login({user,setUser}) {
   }
 
   async function handleLogin() {
-    const url = `http://localhost:4000/api/data/getUserByEmail`;
+    const url = `https://resume-builder-backend-iceh.onrender.com/api/data/getUserByEmail`;
     setLoading(true);
     axios
     .get(url,{headers: {email: Email}})
