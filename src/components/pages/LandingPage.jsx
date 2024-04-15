@@ -23,6 +23,8 @@ function LandingPage({user}) {
   const navigate = useNavigate();
   const templates = [res1, res2, res3, res4];
 
+  
+
   const faqData = [
     {
       id: "q1",

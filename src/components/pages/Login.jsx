@@ -20,6 +20,9 @@ function Login({user,setUser}) {
       navigate("/dashboard");
     }
   }, [user]);
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scrolls to the top when component is rendered
+  }, []);
 
   useEffect(() => {
     const google = window["google"];

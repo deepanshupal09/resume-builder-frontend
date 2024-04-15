@@ -2,22 +2,20 @@ import React from "react";
 import { TextField } from "@mui/material";
 import { useState, useEffect } from "react";
 // import { signIn, useAuth } from "../../firebase";
-import { useNavigate,  } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { getCookie, setCookieWithExpiry } from "../../cookies";
 import axios from "axios";
 import Navbar from "../Navbar";
-import Footer from "../Footer";
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
-function Signup({user, setUser}) {
-  const [Name, setName] = useState("");
+function Login({user,setUser}) {
   const [Email, setEmail] = useState("");
   const [Password, setPass] = useState("");
-  const [ConfirmPass, setConfirmPass] = useState("");
-  const [helperTextEmail, setHelperTextEmail] = useState("");
-  const [helperTextPass, setHelperTextPass] = useState("");
-  const [helperTextPassConf, setHelperTextPassConf] = useState("");
+  const [helperText, setHelperText] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +23,10 @@ function Signup({user, setUser}) {
       navigate("/dashboard");
     }
   }, [user]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scrolls to the top when component is rendered
+  }, []);
 
   useEffect(() => {
     const google = window["google"];
@@ -49,66 +51,59 @@ function Signup({user, setUser}) {
   }, []);
 
   function handleCallBackResponse(e) {
+    setLoading(true);
     console.log(jwtDecode(e.credential));
-    const usr = jwtDecode(e.credential);
+    let usr = jwtDecode(e.credential);
     setCookieWithExpiry("auth", usr, 2);
-    setUser(usr)
+    usr = { ...usr, password: null };
+    setUser(usr);
 
     axios
-      .post("https://resume-builder-backend-iceh.onrender.com/api/data/", usr)
+      .post("http://localhost:4000/api/data/", usr)
       .then((res) => {
         console.log("logged in! ", res);
+        setLoading(false);
       })
       .catch((error) => {
+        setHelperText("Internal Server Error")
+        setError(true);
         console.log("error ", error);
+        setLoading(false);
       });
     navigate("/dashboard");
   }
 
-  async function handleSignUp() {
-
-
-    if (
-      Password.length < 8 ||
-      ConfirmPass.length < 8 ||
-      Password !== ConfirmPass
-    ) {
-      return;
-    }
-
-    const url = `https://resume-builder-backend-iceh.onrender.com/api/data/getUserByEmail`;
-    console.log("URL: ", url);
-
+  async function handleLogin() {
+    const url = `http://localhost:4000/api/data/getUserByEmail`;
+    setLoading(true);
     axios
-      .get(url,{headers: {email: Email}})
-      .then((res) => {
-        console.log("response: ", res);
-        if (res.data.length > 0) {
-          setEmail("");
+    .get(url,{headers: {email: Email}})
+    .then((res) => {
+      setLoading(false);
+      if (res.data.length < 1) {
+        console.log("Email Id not found");
+        setError(true);
+        setHelperText("Email Not found");
+      } else {
+        res.data = res.data[0];
+        console.log(res.data.password);
+        if (res.data.password !== Password) {
+          console.log("Incorrect Password");
           setError(true);
-          setHelperTextEmail("Email already exists!");
+          setHelperText("Incorrect Password");
         } else {
-          const usr = {
-            email: Email,
-            name: Name,
-            picture:
-              "https://media.istockphoto.com/id/1397556857/vector/avatar-13.jpg?s=612x612&w=0&k=20&c=n4kOY_OEVVIMkiCNOnFbCxM0yQBiKVea-ylQG62JErI=",
-            password: Password,
-          };
-          axios
-            .post("https://resume-builder-backend-iceh.onrender.com/api/data/", usr)
-            .then((res) => {
-              setCookieWithExpiry("auth", usr, 2);
-              console.log("logged in! ", res);
-              setUser(usr);
-              navigate("/dashboard");
-            })
-            .catch((error) => {
-              console.log("error ", error);
-            });
+          console.log("Logged In");
+          const usr = res.data;
+          setCookieWithExpiry("auth", usr, 2);
+          setUser(usr);
+          navigate("/dashboard");
         }
-      })
-      .catch((error) => {
+      }
+    })
+    .catch((error) => {
+        setLoading(false);
+        setHelperText("Internal Server Error")
+        setError(true);
         console.log("error: ", error);
       });
   }
@@ -119,68 +114,21 @@ function Signup({user, setUser}) {
     
       <div
         id="l"
+        //   style="background-image: url(https://upload.wikimedia.org/wikipedia/commons/3/33/Microsoft_login_screen.svg)"
         className=" "
       >
         <div className="flex justify-center h-[100vh]  items-center">
           <div className="flex flex-col  h  bg-white  rounded-3xl shadow-2xl max-[450px]:backdrop-blur-0 max-[450px]:rounded-none shadow-black p-6 items-center space-y-10 justify-start h-fit pt-16 pb-10 px-10 max-[450px]:w-[100%] max-[450px]:h-[100%] w-[450px] xl:w-[25vw] ">
-            <span className="text-4xl font-semibold ">Sign Up</span>
-            <div className=" w-[100%]">
-              <TextField
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setError(false);
-                }}
-                value={Name}
-                className=""
-                sx={{
-                  "& .MuiInputBase-root": {
-                    //   color: "#ece9e9",
-                  },
-                  "& .MuiFormLabel-root": {
-                    //   color: "#ece9e9",
-                  },
-                  "& .MuiFormLabel-root.Mui-focused": {
-                    //   color: "#ece9e9",
-                  },
-                  ".MuiInputBase-input": {
-                    //   background: "#130f22",
-                    borderRadius: "10px",
-                    "&:-webkit-autofill": {
-                      // WebkitBoxShadow: "0 0 0px 1000px #130f22 inset",
-                      // WebkitTextFillColor: "#ece9e9",
-                    },
-                  },
-                  ".MuiTextField-root": {
-                    //   background: "#130f22",
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    // borderColor: "#fff",
-                  },
-                  "&:before, &:after": {
-                    borderRadius: "10px",
-                  },
-                }}
-                InputProps={{
-                  style: {
-                    borderRadius: "10px",
-                  },
-                }}
-                id="myfilled-name"
-                label="Name"
-                variant="outlined"
-                color="grey"
-                fullWidth
-              />
-            </div>
-            <div className="w-[100%]">
+            <span className="text-4xl font-semibold ">Login</span>
+            <div className="mt-1 w-[100%]">
               <TextField
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  setHelperTextEmail("");
+                  setHelperText("");
                   setError(false);
                 }}
                 value={Email}
-                helperText={helperTextEmail}
+                helperText={helperText}
                 error={error}
                 className=""
                 sx={{
@@ -223,37 +171,17 @@ function Signup({user, setUser}) {
                 fullWidth
               />
             </div>
-            <div className=" w-[100%]">
+            <div className="mt-1 w-[100%]">
               <TextField
                 onChange={(e) => {
                   setPass(e.target.value);
-                  if (e.target.length !== "") {
-                    if (e.target.value.length < 8)
-                      setHelperTextPass(
-                        "Password must be of atleast 8 characters"
-                      );
-                    else if (
-                      Password !== "" &&
-                      ConfirmPass !== "" &&
-                      e.target.value !== ConfirmPass
-                    ) {
-                      setHelperTextPass("Passwords do not match");
-                      setHelperTextPassConf("Passwords do not match");
-                    } else {
-                      setHelperTextPass("");
-                      setHelperTextPassConf("");
-                    }
-                  } else {
-                    setHelperTextPass("");
-                  }
+                  setHelperText("");
+                  setError(false);
                 }}
                 type="password"
                 value={Password}
-                helperText={helperTextPass}
-                error={
-                  (ConfirmPass !== Password || ConfirmPass.length < 8) &&
-                  Password !== ""
-                }
+                helperText={helperText}
+                error={error}
                 sx={{
                   "& .MuiInputBase-root": {
                     //   color: "#ece9e9",
@@ -294,77 +222,24 @@ function Signup({user, setUser}) {
                 fullWidth
               />
             </div>
-            <div className=" w-[100%]">
-              <TextField
-                onChange={(e) => {
-                  setConfirmPass(e.target.value);
-                  if (
-                    e.target.value !== "" &&
-                    Password !== "" &&
-                    e.target.value !== Password
-                  ) {
-                    setHelperTextPassConf("Passwords do not match!");
-                  } else {
-                    setHelperTextPassConf("");
-                    setHelperTextPass("");
-                  }
-                }}
-                type="password"
-                value={ConfirmPass}
-                helperText={helperTextPassConf}
-                error={
-                  ConfirmPass !== Password &&
-                  Password !== "" &&
-                  ConfirmPass !== ""
-                }
-                sx={{
-                  "& .MuiInputBase-root": {
-                    //   color: "#ece9e9",
-                  },
-                  "& .MuiFormLabel-root": {
-                    //   color: "#ece9e9",
-                  },
-                  "& .MuiFormLabel-root.Mui-focused": {
-                    //   color: "#ece9e9",
-                  },
-                  ".MuiInputBase-input": {
-                    //   background: "#130f22",
-                    borderRadius: "10px",
-                    "&:-webkit-autofill": {
-                      // WebkitBoxShadow: "0 0 0px 1000px #130f22 inset",
-                      // WebkitTextFillColor: "#ece9e9",
-                    },
-                  },
-                  ".MuiTextField-root": {
-                    //   background: "#130f22",
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    // borderColor: "#fff",
-                  },
-                  "&:before, &:after": {
-                    borderRadius: "10px",
-                  },
-                }}
-                InputProps={{
-                  style: {
-                    borderRadius: "10px",
-                  },
-                }}
-                id="myfilled-name"
-                label="Confirm Password"
-                variant="outlined"
-                color="grey"
-                fullWidth
-              />
-            </div>
-            <button className="btn-grad font-semibold" onClick={handleSignUp}>
-              Sign Up
+            <button className="btn-grad font-semibold" onClick={handleLogin}>
+              Sign In
             </button>
             <div id="signInDiv"></div>
+            {/* <Link to="/getemail" className="self-end ">
+              Forgot Password?
+            </Link> */}
           </div>
         </div>
       </div>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      // onClick={handleClose}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }
-export default Signup;
+export default Login;

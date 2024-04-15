@@ -60,6 +60,9 @@ export default function Dashboard({ user, setUser }) {
     console.log("user info : ", user);
     if (!user) navigate("/login")
   }, [user])
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scrolls to the top when component is rendered
+  }, []);
 
 
   useEffect(() => {

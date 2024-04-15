@@ -15,6 +15,10 @@ function useNotFound() {
         return () => instance.destroy();
     }, []);
 
+    useEffect(() => {
+        window.scrollTo(0, 0); // Scrolls to the top when component is rendered
+      }, []);
+
     return pic;
 }
 
